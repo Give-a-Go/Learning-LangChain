@@ -50,7 +50,7 @@ const StoryStateAnnotation = Annotation.Root({
     }[]
   >({
     default: () => [],
-    reducer: (current, update) => update,
+    reducer: (_current, update) => update,
   }),
 
   // Story plan - the blueprint for our story
@@ -61,7 +61,7 @@ const StoryStateAnnotation = Annotation.Root({
     settings: { name: string; description: string }[];
     scenes: { title: string; description: string }[];
   }>({
-    reducer: (current, update) => update,
+    reducer: (_current, update) => update,
   }),
 
   // Individual scenes with details
@@ -88,7 +88,7 @@ const StoryStateAnnotation = Annotation.Root({
       description: string;
     }[];
   }>({
-    reducer: (current, update) => update,
+    reducer: (_current, update) => update,
   }),
 });
 
@@ -119,16 +119,14 @@ const model = new ChatGroq({
 const processInputs = async (state: typeof StoryStateAnnotation.State) => {
   console.log("Processing user inputs...");
 
-  // Handle different input formats
-  if (state.audience_inputs && Array.isArray(state.audience_inputs)) {
+  const inputs = state?.audience_inputs;
+
+  if (Array.isArray(inputs)) {
     return {}; // Already in correct format
-  } else if (
-    state.audience_inputs &&
-    state.audience_inputs.audience_inputs &&
-    Array.isArray(state.audience_inputs.audience_inputs)
-  ) {
-    // Fix nested structure if needed
-    return { audience_inputs: state.audience_inputs.audience_inputs };
+  }
+
+  if (inputs && Array.isArray((inputs as { audience_inputs?: unknown })?.audience_inputs)) {
+    return { audience_inputs: (inputs as { audience_inputs: unknown }).audience_inputs };
   }
 
   return {};
@@ -144,7 +142,7 @@ const planStory = async (state: typeof StoryStateAnnotation.State) => {
   const inputItems = state.audience_inputs || [];
 
   // Helper function to extract items by category
-  const getCategoryItems = (category) => {
+  const getCategoryItems = (category: string) => {
     return inputItems
       .filter(
         (item) =>
